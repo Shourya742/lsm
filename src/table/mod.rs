@@ -2,8 +2,10 @@ use std::{
     fs::{self, File},
     os::unix::fs::FileExt,
     path::Path,
+    sync::Arc,
 };
 
+use anyhow::Result;
 use bytes::Buf;
 
 use crate::{

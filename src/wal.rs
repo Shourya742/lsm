@@ -1,5 +1,6 @@
 use std::{fs::File, path::Path, sync::Arc};
 
+use anyhow::Result;
 use bytes::Bytes;
 use crossbeam_skiplist::SkipMap;
 use parking_lot::Mutex;

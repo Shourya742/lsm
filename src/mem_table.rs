@@ -1,5 +1,10 @@
-use std::ops::Bound;
+use std::{
+    ops::Bound,
+    path::Path,
+    sync::{Arc, atomic::AtomicUsize},
+};
 
+use anyhow::Result;
 use bytes::Bytes;
 use crossbeam_skiplist::SkipMap;
 use ouroboros::self_referencing;
@@ -64,7 +69,7 @@ impl MemTable {
         unimplemented!()
     }
 
-    pub fn put_batch(&self, data: &[(keySlice, &[u8])]) -> Result<()> {
+    pub fn put_batch(&self, data: &[(KeySlice, &[u8])]) -> Result<()> {
         unimplemented!()
     }
 

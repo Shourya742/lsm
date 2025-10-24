@@ -1,3 +1,6 @@
+use anyhow::Result;
+use std::sync::Arc;
+
 use crate::{
     block::iterator::BlockIterator, iterators::StorageIterator, key::KeySlice, table::SsTable,
 };

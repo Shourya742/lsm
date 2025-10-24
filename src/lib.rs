@@ -1,5 +1,6 @@
 #![allow(warnings)]
 pub mod block;
+pub mod compact;
 pub mod iterators;
 pub mod key;
 pub mod lsm_storage;

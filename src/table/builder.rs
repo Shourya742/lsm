@@ -1,4 +1,5 @@
-use std::path::Path;
+use anyhow::Result;
+use std::{path::Path, sync::Arc};
 
 use crate::{
     block::builder::BlockBuilder,

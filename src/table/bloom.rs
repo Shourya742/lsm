@@ -1,3 +1,4 @@
+use anyhow::Result;
 use bytes::{BufMut, Bytes};
 
 /// Implements a bloom filter

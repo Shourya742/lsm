@@ -1,4 +1,7 @@
-use crate::key::{KeySlice, KeyVec};
+use crate::{
+    block::Block,
+    key::{KeySlice, KeyVec},
+};
 
 /// Builds a block.
 pub struct BlockBuilder {
