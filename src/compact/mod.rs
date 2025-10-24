@@ -1,3 +1,5 @@
+use std::{sync::Arc, time::Duration};
+
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -9,8 +11,11 @@ use crate::{
         },
         tiered::{TieredCompactionController, TieredCompactionOptions, TieredCompactionTask},
     },
-    lsm_storage::LsmStorageState,
+    lsm_storage::{LsmStorageInner, LsmStorageState},
+    table::SsTable,
 };
+
+use anyhow::Result;
 
 pub mod leveled;
 pub mod simple_leveled;
@@ -102,4 +107,66 @@ pub enum CompactionOptions {
     Simple(SimpleLeveledCompactionOptions),
     /// In no compaction mode, always flush to L0
     NoCompaction,
+}
+
+impl LsmStorageInner {
+    fn compact(&self, task: &CompactionTask) -> Result<Vec<Arc<SsTable>>> {
+        unimplemented!()
+    }
+
+    pub fn force_full_compaction(&self) -> Result<()> {
+        unimplemented!()
+    }
+
+    fn trigger_compaction(&self) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub(crate) fn spawn_compaction_thread(
+        self: &Arc<Self>,
+        rx: crossbeam_channel::Receiver<()>,
+    ) -> Result<Option<std::thread::JoinHandle<()>>> {
+        if let CompactionOptions::Leveled(_)
+        | CompactionOptions::Simple(_)
+        | CompactionOptions::Tiered(_) = self.options.compaction_options
+        {
+            let this = self.clone();
+            let handle = std::thread::spawn(move || {
+                let ticker = crossbeam_channel::tick(Duration::from_millis(50));
+                loop {
+                    crossbeam_channel::select! {
+                        recv(ticker) -> _ => if let Err(e) = this.trigger_compaction() {
+                            eprintln!("Compaction failed: {}", e);
+                        },
+                        recv(rx) -> _ => return
+                    }
+                }
+            });
+            return Ok(Some(handle));
+        }
+        Ok(None)
+    }
+
+    fn trigger_flush(&self) -> Result<()> {
+        Ok(())
+    }
+
+    pub(crate) fn spawn_flush_thread(
+        self: &Arc<Self>,
+        rx: crossbeam_channel::Receiver<()>,
+    ) -> Result<Option<std::thread::JoinHandle<()>>> {
+        let this = self.clone();
+        let handle = std::thread::spawn(move || {
+            let ticker = crossbeam_channel::tick(Duration::from_millis(50));
+            loop {
+                crossbeam_channel::select! {
+                    recv(ticker) -> _ => if let Err(e) = this.trigger_flush() {
+                        eprintln!("flush failed: {}", e);
+                    },
+                    recv(rx) -> _ => return
+                }
+            }
+        });
+        Ok(Some(handle))
+    }
 }

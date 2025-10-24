@@ -4,6 +4,7 @@ pub mod compact;
 pub mod iterators;
 pub mod key;
 pub mod lsm_storage;
+pub mod manifest;
 pub mod mem_table;
 pub mod mvcc;
 pub mod table;
