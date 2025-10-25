@@ -9,11 +9,15 @@ use bytes::Bytes;
 use crossbeam_skiplist::SkipMap;
 use ouroboros::self_referencing;
 
-use crate::{iterators::StorageIterator, key::KeySlice, wal::Wal};
+use crate::{
+    iterators::StorageIterator,
+    key::{KeyBytes, KeySlice},
+    wal::{self, Wal},
+};
 
 /// A basic mem-table on crossbeam-skiplist
 pub struct MemTable {
-    map: Arc<SkipMap<Bytes, Bytes>>,
+    map: Arc<SkipMap<KeyBytes, Bytes>>,
     wal: Option<Wal>,
     id: usize,
     approximate_size: Arc<AtomicUsize>,
@@ -60,17 +64,34 @@ impl MemTable {
     }
 
     /// Get a value by key
-    pub fn get(&self, key: &[u8]) -> Option<Bytes> {
-        unimplemented!()
+    pub fn get(&self, key: KeySlice) -> Option<Bytes> {
+        let key_bytes = KeyBytes::from_bytes_with_ts(
+            Bytes::from_static(unsafe { std::mem::transmute(key.key_ref()) }),
+            key.ts(),
+        );
+        self.map.get(&key_bytes).map(|e| e.value().clone())
     }
 
     /// Put a key-value pair into the mem-table
-    pub fn put(&self, key: &[u8], value: &[u8]) -> Result<()> {
-        unimplemented!()
+    pub fn put(&self, key: KeySlice, value: &[u8]) -> Result<()> {
+        self.put_batch(&[(key, value)])
     }
 
     pub fn put_batch(&self, data: &[(KeySlice, &[u8])]) -> Result<()> {
-        unimplemented!()
+        let mut estimated_size = 0;
+        for (key, value) in data {
+            estimated_size += key.raw_len() + value.len();
+            self.map.insert(
+                key.to_key_vec().into_key_bytes(),
+                Bytes::copy_from_slice(value),
+            );
+        }
+        self.approximate_size
+            .fetch_add(estimated_size, std::sync::atomic::Ordering::Relaxed);
+        if let Some(ref wal) = self.wal {
+            wal.put_batch(data)?;
+        }
+        Ok(())
     }
 
     pub fn sync_wal(&self) -> Result<()> {
