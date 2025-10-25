@@ -6,12 +6,12 @@ use std::{
 
 use anyhow::Result;
 use bytes::Bytes;
-use crossbeam_skiplist::SkipMap;
+use crossbeam_skiplist::{SkipMap, map::Entry};
 use ouroboros::self_referencing;
 
 use crate::{
     iterators::StorageIterator,
-    key::{KeyBytes, KeySlice},
+    key::{KeyBytes, KeySlice, TS_DEFAULT},
     wal::{self, Wal},
 };
 
@@ -137,22 +137,32 @@ pub struct MemTableIterator {
     iter: SkipMapRangeIter<'this>,
 }
 
+impl MemTableIterator {
+    fn entry_to_item(entry: Option<Entry<'_, Bytes, Bytes>>) -> (Bytes, Bytes) {
+        entry
+            .map(|x| (x.key().clone(), x.value().clone()))
+            .unwrap_or_else(|| (Bytes::from_static(&[]), Bytes::from_static(&[])))
+    }
+}
+
 impl StorageIterator for MemTableIterator {
     type KeyType<'a> = KeySlice<'a>;
 
     fn value(&self) -> &[u8] {
-        unimplemented!()
+        &self.borrow_item().1[..]
     }
 
     fn key(&self) -> Self::KeyType<'_> {
-        unimplemented!()
+        KeySlice::from_slice(&self.borrow_item().0[..], TS_DEFAULT)
     }
 
     fn is_valid(&self) -> bool {
-        unimplemented!()
+        !self.borrow_item().0.is_empty()
     }
 
     fn next(&mut self) -> anyhow::Result<()> {
-        unimplemented!()
+        let entry = self.with_iter_mut(|iter| MemTableIterator::entry_to_item(iter.next()));
+        self.with_mut(|x| *x.item = entry);
+        Ok(())
     }
 }
