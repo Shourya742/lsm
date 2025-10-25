@@ -34,7 +34,7 @@ impl SsTableIterator {
     }
 }
 
-impl StorageIterator for SsTable {
+impl StorageIterator for SsTableIterator {
     type KeyType<'a> = KeySlice<'a>;
 
     /// Return the `key` that's held by the underlying block iterator.

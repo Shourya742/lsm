@@ -145,6 +145,10 @@ impl SsTable {
         &self.first_key
     }
 
+    pub fn last_key(&self) -> &KeyBytes {
+        &self.last_key
+    }
+
     pub fn table_size(&self) -> u64 {
         self.file.1
     }

@@ -1,3 +1,4 @@
+mod concat_iterator;
 mod merge_iterator;
 mod two_merge_iterator;
 
