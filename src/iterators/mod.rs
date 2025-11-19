@@ -1,6 +1,6 @@
-mod concat_iterator;
-mod merge_iterator;
-mod two_merge_iterator;
+pub mod concat_iterator;
+pub mod merge_iterator;
+pub mod two_merge_iterator;
 
 pub trait StorageIterator {
     type KeyType<'a>: PartialEq + Eq + PartialOrd + Ord

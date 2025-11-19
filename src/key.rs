@@ -20,7 +20,7 @@ impl<T: AsRef<[u8]>> Key<T> {
         self.0
     }
 
-    pub fn len(&self) -> usize {
+    pub fn key_len(&self) -> usize {
         self.0.as_ref().len()
     }
 
@@ -59,6 +59,10 @@ impl KeyVec {
 
     pub fn set_ts(&mut self, ts: u64) {
         self.1 = ts;
+    }
+
+    pub fn key_ref(&self) -> &[u8] {
+        self.0.as_ref()
     }
 
     /// Set the key from a slice without re-allocating. The signature will change in week 3.

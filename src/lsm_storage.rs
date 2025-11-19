@@ -113,6 +113,38 @@ pub struct MiniLsm {
     compaction_thread: Mutex<Option<std::thread::JoinHandle<()>>>,
 }
 
+fn range_overlap(
+    user_begin: Bound<&[u8]>,
+    user_end: Bound<&[u8]>,
+    table_begin: KeySlice,
+    table_end: KeySlice,
+) -> bool {
+    match user_end {
+        Bound::Excluded(key) if key <= table_begin.key_ref() => {
+            return false;
+        }
+        Bound::Included(key) if key < table_begin.key_ref() => {
+            return false;
+        }
+        _ => {}
+    }
+
+    match user_begin {
+        Bound::Excluded(key) if key >= table_end.key_ref() => {
+            return false;
+        }
+        Bound::Included(key) if key > table_end.key_ref() => {
+            return false;
+        }
+        _ => {}
+    }
+    true
+}
+
+fn key_withing(user_key: &[u8], table_begin: KeySlice, table_end: KeySlice) -> bool {
+    table_begin.key_ref() <= user_key && user_key <= table_end.key_ref()
+}
+
 impl Drop for MiniLsm {
     fn drop(&mut self) {
         self.compaction_notifier.send(()).ok();
@@ -237,7 +269,7 @@ impl LsmStorageInner {
     }
 
     pub fn sync(&self) -> Result<()> {
-        unimplemented!()
+        self.state.read().memtable.sync_wal()
     }
 
     pub fn add_compaction_filter(&self, compaction_filter: CompactionFilter) {
