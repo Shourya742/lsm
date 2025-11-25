@@ -97,12 +97,25 @@ impl SimpleLeveledCompactionController {
             snapshot.levels[upper_level - 1].1.clear();
         } else {
             files_to_remove.extend(&task.upper_level_sst_ids);
-            let mut l0_ssts_compacted = task.upper_level_sst_ids.iter().copied().collect::<HashSet<_>>();
-            let new_l0_sstables = snapshot.l0_sstables.iter().copied().filter(|x| !l0_ssts_compacted.remove(x)).collect::<Vec<_>>();
+            let mut l0_ssts_compacted = task
+                .upper_level_sst_ids
+                .iter()
+                .copied()
+                .collect::<HashSet<_>>();
+            let new_l0_sstables = snapshot
+                .l0_sstables
+                .iter()
+                .copied()
+                .filter(|x| !l0_ssts_compacted.remove(x))
+                .collect::<Vec<_>>();
             assert!(l0_ssts_compacted.is_empty());
             snapshot.l0_sstables = new_l0_sstables;
         }
-        assert_eq!(task.lower_level_sst_ids, snapshot.levels[task.lower_level - 1].1, "sst mismatched");
+        assert_eq!(
+            task.lower_level_sst_ids,
+            snapshot.levels[task.lower_level - 1].1,
+            "sst mismatched"
+        );
         snapshot.levels[task.lower_level - 1].1 = output.to_vec();
         (snapshot, files_to_remove)
     }
